@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Futebol Mundial</title>
+<style>
+:root{color-scheme:dark;--bg:#0b2a1a;--card:#14452b;--ac:#ffd54a;--tx:#f2fff6;--mu:#9fc9b0;--bd:#1f6b43;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,Arial,sans-serif;min-height:100vh}
+h1{text-align:center;font-size:1.4rem;margin:16px 8px;color:var(--ac)}h2{font-size:1.15rem;color:var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px;max-width:900px;margin:auto}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+.tile,.sub,.go{background:var(--card);border:2px solid var(--bd);border-radius:16px;color:var(--tx);cursor:pointer;font:inherit}
+.tile{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:700}
+.tile span{font-size:3rem}
+.tile:active,.sub:active,.go:active{transform:scale(.97);border-color:var(--ac)}
+.wrap{max-width:700px;margin:auto;padding:12px}
+.back{background:none;border:0;color:var(--ac);font-size:1rem;padding:8px 0;cursor:pointer}
+.sub{display:block;width:100%;padding:16px;margin:8px 0;text-align:left;font-weight:600}
+.go{padding:14px;margin:8px 6px 8px 0;font-weight:700;background:var(--ac);color:#10281a;border-color:var(--ac)}
+.mt{display:grid;grid-template-columns:1fr 50px 16px 50px 1fr;gap:4px;align-items:center;margin:6px 0}
+.mt span:first-child{text-align:right}.mt b{text-align:center}
+input,textarea{background:#0e3520;color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px;font:inherit;width:100%;text-align:center}
+textarea{text-align:left}
+table{width:100%;border-collapse:collapse;font-size:.9rem;margin:6px 0 14px}
+th,td{padding:5px;border-bottom:1px solid var(--bd);text-align:center}th{color:var(--ac)}td:nth-child(2),th:nth-child(2){text-align:left}
+.pen{font-size:.85rem;color:var(--mu);text-align:center;margin-bottom:6px}.pen input{width:50px;display:inline-block}
+.soon{color:var(--mu);padding:16px;text-align:center}
+.champ{font-size:1.5rem;text-align:center;color:var(--ac);padding:20px;border:2px solid var(--ac);border-radius:16px;margin:12px 0}
+.box{overflow-x:auto}.chip{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:20px;padding:6px 10px;margin:3px;font:inherit;cursor:pointer}
+</style>
+</head>
+<body>
+
+<h1>⚽ Futebol Mundial</h1>
+<div id="app"></div>
+
+<script>
+const $=i=>document.getElementById(i),esc=s=>s.replace(/[&<>"]/g,c=>"&#"+c.charCodeAt(0)+";");
+
+const P={
+mundo:"Catar,Equador,Senegal,Holanda,Inglaterra,Irã,EUA,País de Gales,Argentina,Arábia Saudita,México,Polônia,França,Austrália,Dinamarca,Tunísia,Espanha,Costa Rica,Alemanha,Japão,Bélgica,Canadá,Marrocos,Croácia,Brasil,Sérvia,Suíça,Camarões,Portugal,Gana,Uruguai,Coreia do Sul",
+fem:"EUA,Alemanha,Brasil,Suécia,Japão,Inglaterra,França,Espanha,Holanda,Noruega,Canadá,Austrália,China,Itália,Dinamarca,Colômbia",
+jov:"Brasil,Argentina,Uruguai,Colômbia,EUA,México,Itália,França,Inglaterra,Espanha,Japão,Coreia do Sul,Nigéria,Senegal,Marrocos,Equador",
+am:"Brasil,Argentina,Uruguai,Colômbia,Chile,Equador,Paraguai,Peru,Bolívia,Venezuela,México,EUA,Canadá,Costa Rica,Panamá,Jamaica",
+eu:"Alemanha,França,Espanha,Inglaterra,Portugal,Itália,Holanda,Bélgica,Croácia,Dinamarca,Suíça,Áustria,Turquia,Polônia,Sérvia,Ucrânia",
+ouro:"México,EUA,Canadá,Costa Rica,Panamá,Jamaica,Honduras,Haiti",
+asia:"Japão,Coreia do Sul,Irã,Austrália,Arábia Saudita,Catar,Iraque,Uzbequistão,Jordânia,Emirados,Omã,China,Síria,Bahrein,Tailândia,Palestina",
+afr:"Marrocos,Senegal,Egito,Nigéria,Camarões,Argélia,Costa do Marfim,Gana,Tunísia,Mali,África do Sul,RD Congo,Burkina Faso,Cabo Verde,Angola,Zâmbia",
+conf:"Brasil,Alemanha,México,Portugal,Chile,Austrália,Rússia,Camarões",
+arab:"Marrocos,Argélia,Tunísia,Egito,Arábia Saudita,Catar,Iraque,Jordânia,Síria,Emirados,Omã,Kuwait,Bahrein,Líbano,Palestina,Mauritânia",
+golfo:"Iraque,Kuwait,Arábia Saudita,Omã,Emirados,Catar,Bahrein,Iêmen",
+cEu:"Real Madrid,Manchester City,Bayern,PSG,Barcelona,Liverpool,Inter,Arsenal,Milan,Juventus,Flamengo,Palmeiras,Boca Juniors,River Plate,Atlético de Madrid,Borussia Dortmund",
+cBr:"Flamengo,Palmeiras,Corinthians,São Paulo,Santos,Fluminense,Botafogo,Grêmio,Internacional,Atlético-MG,Cruzeiro,Vasco,Bahia,Fortaleza,Athletico-PR,Bragantino",
+lCl:"Flamengo,Palmeiras,Corinthians,São Paulo,Fluminense,Botafogo,Grêmio,Internacional",
+lSel:"Brasil,Argentina,França,Alemanha,Espanha,Inglaterra,Portugal,Itália",
+areia:"Brasil,Portugal,Itália,Rússia,Japão,Espanha,Senegal,EUA,Irã,Taiti,Bielorrússia,Suíça,Emirados,Paraguai,Uruguai,Egito",
+vazio:""
+};
+
+const WC="1930 Uruguai|1934 Itália|1938 Itália|1950 Uruguai|1954 Alemanha Ocid.|1958 Brasil|1962 Brasil|1966 Inglaterra|1970 Brasil|1974 Alemanha Ocid.|1978 Argentina|1982 Itália|1986 Argentina|1990 Alemanha Ocid.|1994 Brasil|1998 França|2002 Brasil|2006 Itália|2010 Espanha|2014 Alemanha|2018 França|2022 Argentina";
+
+const GB="1930 Stábile 8|1934 Nejedlý 5|1938 Leônidas 7|1950 Ademir 8|1954 Kocsis 11|1958 Fontaine 13|1962 Seis jogadores 4|1966 Eusébio 9|1970 Gerd Müller 10|1974 Lato 7|1978 Kempes 6|1982 Paolo Rossi 6|1986 Lineker 6|1990 Schillaci 6|1994 Stoichkov/Salenko 6|1998 Šuker 6|2002 Ronaldo 8|2006 Klose 5|2010 Thomas Müller 5|2014 James Rodríguez 6|2018 Kane 6|2022 Mbappé 8";
+
+const M=[
+{e:"🏆",n:"Competição Mundial",s:[
+["Simular Copa do Mundo","cup","mundo"],
+["Copa do Mundo feminina","cup","fem"],
+["Copa do Mundo Sub-20","cup","jov"],
+["Copa do Mundo Sub-17","cup","jov"],
+["Criar copa","cup","vazio"],
+["Campeões de cada Copa","data",WC]
+]},
+{e:"👟",n:"Chuteira de Ouro",s:[
+["Artilheiro de cada Copa","data",GB]
+]},
+{e:"🌍",n:"Copas Continentais",s:[
+["Copa América","cup","am"],
+["Eurocopa","cup","eu"],
+["Copa Ouro (Concacaf)","cup","ouro"],
+["Copa da Ásia (AFC)","cup","asia"],
+["Copa Africana de Nações","cup","afr"],
+["Copa das Confederações","cup","conf"],
+["Liga das Nações da Europa","cup","eu"],
+["Liga das Nações da África","cup","afr"],
+["Finalíssima","match"],
+["Copa Árabe","cup","arab"],
+["Copa do Golfo","cup","golfo"],
+["Criar copa","cup","vazio"]
+]},
+{e:"🛡️",n:"Copas de Clubes",s:[
+["Copa continental","cup","cEu"],
+["Copa nacional","cup","cBr"],
+["Liga","liga","lCl"],
+["Partida de clubes","match"],
+["Criar copa e clubes","cup","vazio"]
+]},
+{e:"🏖️",n:"Futebol de Areia",s:[
+["Copa do Mundo de Futebol de Areia","cup","areia"]
+]},
+{e:"➕",n:"Seu Torneio",s:[
+["Copa do Mundo","cup","mundo"],
+["Copa continental","cup","am"],
+["Liga mundial","liga","lSel"],
+["Partida mundial","match"]
+]},
+{e:"✏️",n:"Editor Mundial",s:[
+["Editor de seleções e clubes","ed"],
+["Kits de taças","edit"]
+]},
+{e:"⚽",n:"Partida Formal",s:[
+["Final da Copa do Mundo","match"],
+["Final da Copa América","match"],
+["Final da Eurocopa","match"],
+["Final da Copa Ouro","match"]
+]}
+];
+
+const SELS="Alemanha,Argélia,Argentina,Arábia Saudita,Austrália,Áustria,Bélgica,Bósnia e Herzegovina,Brasil,Canadá,Cabo Verde,Catar,Colômbia,Coreia do Sul,Costa do Marfim,Croácia,Curaçao,Egito,Equador,Escócia,Espanha,EUA,França,Gana,Haiti,Holanda,Inglaterra,Irã,Iraque,Japão,Jordânia,Marrocos,México,Noruega,Nova Zelândia,Panamá,Paraguai,Portugal,RD Congo,Senegal,África do Sul,Suécia,Suíça,Tchéquia,Tunísia,Turquia,Uruguai,Uzbequistão";
+
+const LIB="Flamengo,Estudiantes,Cusco,Independiente Medellín,Nacional,Universitario,Coquimbo Unido,Deportes Tolima,Fluminense,Bolívar,Deportivo La Guaira,Independiente Rivadavia,Boca Juniors,Cruzeiro,Universidad Católica,Barcelona (EQU),Peñarol,Corinthians,Independiente Santa Fe,Platense,Palmeiras,Cerro Porteño,Junior Barranquilla,Sporting Cristal,LDU,Lanús,Always Ready,Mirassol,Independiente del Valle,Libertad,Rosario Central,Universidad Central";
+
+const CT={
+"Europa":"Polônia:Legia Varsóvia,Lech Poznań;Inglaterra:Manchester City,Liverpool,Arsenal;Espanha:Real Madrid,Barcelona,Atlético de Madrid;Alemanha:Bayern,Borussia Dortmund,Bayer Leverkusen;Itália:Inter,Milan,Juventus;França:PSG,Olympique de Marselha;Turquia:Galatasaray,Fenerbahçe;Áustria:Red Bull Salzburg,Sturm Graz;Portugal:Benfica,Porto,Sporting;Holanda:Ajax,PSV;Rússia:Zenit,Spartak Moscou;Ucrânia:Shakhtar Donetsk,Dínamo de Kiev;Bélgica:Club Brugge,Anderlecht;Suíça:Basel,Young Boys;Grécia:Olympiacos,Panathinaikos;Azerbaijão:Qarabağ,Neftçi;Escócia:Celtic,Rangers;Suécia:Malmö,AIK;República Tcheca:Sparta Praga,Slavia Praga;Croácia:Dinamo Zagreb,Hajduk Split;Noruega:Bodø/Glimt,Rosenborg;Dinamarca:Copenhague,Midtjylland;Cazaquistão:Astana,Kairat;Bulgária:Ludogorets,CSKA Sofia;Geórgia:Dinamo Tbilisi,Dinamo Batumi;Irlanda:Shamrock Rovers,Shelbourne;Sérvia:Estrela Vermelha,Partizan;Eslovênia:Olimpija Ljubljana,Maribor",
+
+"América do Sul":"Brasil:Flamengo,Palmeiras,Corinthians,São Paulo;Argentina:Boca Juniors,River Plate,Racing;Colômbia:Atlético Nacional,Junior Barranquilla;Uruguai:Peñarol,Nacional;Equador:LDU,Independiente del Valle;Chile:Colo-Colo,Universidad de Chile;Paraguai:Olimpia,Cerro Porteño;Venezuela:Caracas,Deportivo Táchira;Peru:Alianza Lima,Universitario;Bolívia:Bolívar,The Strongest",
+
+"América do Norte":"EUA:Inter Miami,LA Galaxy,Seattle Sounders;Canadá:Toronto FC,CF Montréal;México:América,Chivas,Cruz Azul;Costa Rica:Saprissa,Alajuelense;Cuba:FC La Habana,Villa Clara;Aruba:SV Dakota,SV Estrella;Panamá:Tauro,Plaza Amador;Haiti:Violette,Racing Haïtien",
+
+"Ásia":"Japão:Vissel Kobe,Urawa Reds;Coreia do Sul:Ulsan HD,Jeonbuk;Arábia Saudita:Al Hilal,Al Nassr,Al Ittihad;Irã:Persepolis,Esteghlal;Emirados Árabes:Al Ain,Al Wahda;Uzbequistão:Pakhtakor,Bunyodkor;Catar:Al Sadd,Al Duhail;China:Shanghai Port,Shandong Taishan;Indonésia:Persija Jakarta,Persib Bandung;Tailândia:Buriram United,BG Pathum United;Austrália:Melbourne City,Sydney FC,Melbourne Victory;Nova Zelândia:Auckland City,Wellington Phoenix",
+
+"África":"Egito:Al Ahly,Zamalek;Marrocos:Wydad,Raja Casablanca;Argélia:USM Alger,CR Belouizdad;Nigéria:Enyimba,Rangers International;Serra Leoa:East End Lions,FC Kallon;Tunísia:Espérance,Club Africain;Senegal:Jaraaf,Casa Sports;Gana:Asante Kotoko,Hearts of Oak;África do Sul:Mamelodi Sundowns,Orlando Pirates;Zâmbia:Zesco United,Power Dynamos"
+};
+
+let C,CI,CJ,CUR,SEL=[],MY=[],LS=[];
+
+const L=x=>x.split(",");
+
+function ch(){
+$("ch").innerHTML=`<b>${SEL.length} equipes</b> <button class="back" onclick="SEL.length=0;ch()">limpar</button><div>`+
+SEL.map((t,i)=>`<button class="chip" onclick="SEL.splice(${i},1);ch()">${t} ✕</button>`).join("")+
+"</div>"
+}
+
+function add(t){
+t=esc(t.trim());
+if(t&&!SEL.includes(t))SEL.push(t);
+ch()
+}
+
+function pkm(){
+$("pk").innerHTML='<h2>Adicionar times</h2><button class="sub" onclick="mk()">➕ Criar time</button><button class="sub" onclick="lst(L(SELS),\'pkm()\')">🌐 Seleções (48 da Copa 2026)</button>'+
+Object.keys(CT).map(k=>`<button class="sub" onclick="ctn('${k}')">${k}</button>`).join("")+
+'<button class="sub" onclick="lst(L(LIB),\'pkm()\')">🏆 Libertadores 2026</button>'
+}
+
+function ctn(k){
+$("pk").innerHTML=`<button class="back" onclick="pkm()">← Voltar</button><h2>${k}</h2>`+
+CT[k].split(";").map(x=>x.split(":")).map(x=>`<button class="sub" onclick="lst(L('${x[1]}'),'ctn(\\'${k}\\')')">${x[0]}</button>`).join("")
+}
+
+function lst(a,b){
+LS=a;
+$("pk").innerHTML=`<button class="back" onclick="${b}">← Voltar</button><button class="go" onclick="LS.forEach(add)">Adicionar todos (${a.length})</button>`+
+a.map((t,i)=>`<button class="sub" onclick="add(LS[${i}])">+ ${t}</button>`).join("")
+}
+
+function mk(){
+$("pk").innerHTML='<button class="back" onclick="pkm()">← Voltar</button><h2>Criar time</h2><input id="nt" placeholder="Nome do time"><button class="go" onclick="add($(\'nt\').value);$(\'nt\').value=\'\'">Adicionar</button>'
+}
+
+const app=$("app");
+
+function home(){
+app.innerHTML='<div class="grid">'+
+M.map((m,i)=>`<button class="tile" onclick="sec(${i})"><span>${m.e}</span>${m.n}</button>`).join("")+
+"</div>"
+}
+
+function sec(i){
+CI=i;
+const m=M[i];
+app.innerHTML=`<div class="wrap"><button class="back" onclick="home()">← Voltar</button><h2>${m.e} ${m.n}</h2>`+
+m.s.map((s,j)=>`<button class="sub" onclick="opn(${j})">${s[0]}</button>`).join("")+
+"</div>"
+}
+
+const bk=`<button class="back" onclick="sec(CI)">← Voltar</button>`;
+
+function opn(j){
+CJ=j;
+const s=M[CI].s[j];
+CUR=s[0];
+let b="";
+
+if(s[1]=="cup"||s[1]=="liga")
+SEL=P[s[2]].split(",").filter(Boolean);
+
+if(s[1]=="ed")SEL=MY;
+
+if(s[1]=="data")
+b='<div class="box"><table>'+
+s[2].split("|").map(r=>{
+const p=r.split(" ");
+return`<tr><td>${p[0]}</td><td>${p.slice(1,-1).join(" ")||p[1]}</td>${s[2]==WC?"":`<td>${p[p.length-1]}</td>`}</tr>`
+}).join("")+
+"</table></div>";
+
+else if(s[1]=="cup"||s[1]=="liga"){
+const l=s[1]=="cup";
+b=`<p class="soon">${l?"Monte a lista (8, 16, 24, 32 ou 48 equipes). Grupos de 4: os 2 melhores avançam (com 24 ou 48, entram também os melhores terceiros).":"Todos contra todos (3 a 24 times)."} Toque nas equipes para tirar ou adicionar.</p><div id="ch"></div><button class="sub" onclick="SEL=MY.slice();ch()">📋 Usar meus times do editor</button><button class="go" onclick="start('${s[1]}',1)">🎲 Sortear e começar</button><button class="go" onclick="start('${s[1]}',0)">Começar na ordem</button><div id="pk"></div>`
+}
+
+else if(s[1]=="match")
+b=`<div class="mt"><input id="na" placeholder="Time A"><input id="sa" type="number" min="0"><b>x</b><input id="sb" type="number" min="0"><input id="nb" placeholder="Time B"></div><div class="pen">Pênaltis se empatar: <input id="pa" type="number" min="0"> x <input id="pb" type="number" min="0"></div><button class="go" onclick="res()">Ver resultado</button><div id="r"></div>`;
+
+else if(s[1]=="ed")
+b='<p class="soon">Monte sua lista de times. Ela fica guardada enquanto a página estiver aberta e você pode usá-la ao criar um torneio.</p><div id="ch"></div><div id="pk"></div>';
+
+else
+b='<p class="soon">🚧 Em breve. Por enquanto, você já edita os nomes das equipes ao começar qualquer copa.</p>';
+
+app.innerHTML=`<div class="wrap">${bk}<h2>${CUR}</h2>${b}</div>`;
+
+if($("ch")){
+ch();
+pkm()
+}
+}
+
+function res(){
+const a=esc($("na").value||"Time A"),
+b=esc($("nb").value||"Time B"),
+x=$("sa").value,
+y=$("sb").value;
+
+if(x===""||y==="")return alert("Digite os dois placares.");
+
+let t=`${a} ${x} x ${y} ${b}`,
+w=+x>+y?a:+y>+x?b:null;
+
+if(!w){
+const p=$("pa").value,
+q=$("pb").value;
+
+if(p!==""&&q!==""&&p!=q){
+t+=` (pên. ${p} x ${q})`;
+w=+p>+q?a:b
+}
+}
+
+$("r").innerHTML=`<div class="champ">${t}<br>${w?"🏆 "+w:"Empate"}</div>`
+}
+
+function start(mode,shuf){
+let t=SEL.slice(),n=t.length;
+
+if(mode=="cup"&&![8,16,24,32,48].includes(n))
+return alert("Use 8, 16, 24, 32 ou 48 equipes. Você tem "+n+".");
+
+if(mode=="liga"&&(n<3||n>24))
+return alert("Liga: de 3 a 24 times.");
+
+if(shuf)t.sort(()=>Math.random()-.5);
+
+const z=mode=="cup"?4:n,G=[];
+
+for(let i=0;i<n;i+=z){
+const tm=t.slice(i,i+z),m=[];
+
+for(let x=0;x<tm.length;x++)
+for(let y=x+1;y<tm.length;y++)
+m.push({a:tm[x],b:tm[y],ga:null,gb:null});
+
+G.push({tm,m})
+}
+
+C={mode,G,ko:[]};
+show()
+}
+
+function show(){
+let h=`<div class="wrap">${bk}<h2>${CUR}</h2><p class="soon">Digite os placares. As tabelas se atualizam sozinhas.</p>`;
+
+C.G.forEach((g,gi)=>{
+h+=`<h2>${C.mode=="cup"?"Grupo "+String.fromCharCode(65+gi):"Classificação"}</h2>`+
+g.m.map((m,i)=>`<div class="mt"><span>${m.a}</span><input type="number" min="0" onchange="gs(${gi},${i},'ga',this.value)"><b>x</b><input type="number" min="0" onchange="gs(${gi},${i},'gb',this.value)"><span>${m.b}</span></div>`).join("")+
+`<div class="box" id="t${gi}"></div>`
+});
+
+if(C.mode=="cup")
+h+='<button class="go" onclick="goKO()">Avançar ao mata-mata →</button>';
+
+h+='<div id="ko"></div><div id="kb"></div></div>';
+
+app.innerHTML=h;
+
+C.G.forEach((g,i)=>tbl(i))
+}
+
+function rank(g){
+const s={};
+
+g.tm.forEach(t=>s[t]={t,p:0,j:0,v:0,e:0,d:0,gp:0,gc:0});
+
+g.m.forEach(m=>{
+if(m.ga==null||m.gb==null)return;
+
+const A=s[m.a],B=s[m.b];
+
+A.j++;
+B.j++;
+
+A.gp+=m.ga;
+A.gc+=m.gb;
+
+B.gp+=m.gb;
+B.gc+=m.ga;
+
+if(m.ga>m.gb){
+A.v++;
+A.p+=3;
+B.d++
+}
+else if(m.ga<m.gb){
+B.v++;
+B.p+=3;
+A.d++
+}
+else{
+A.e++;
+B.e++;
+A.p++;
+B.p++
+}
+});
+
+return Object.values(s).sort((x,y)=>
+y.p-x.p||
+(y.gp-y.gc)-(x.gp-x.gc)||
+y.gp-x.gp
+)
+}
+
+function tbl(gi){
+$("t"+gi).innerHTML="<table><tr><th>#</th><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr>"+
+rank(C.G[gi]).map((r,i)=>`<tr><td>${i+1}</td><td>${r.t}</td><td><b>${r.p}</b></td><td>${r.j}</td><td>${r.v}</td><td>${r.e}</td><td>${r.d}</td><td>${r.gp-r.gc}</td></tr>`).join("")+
+"</table>"
+}
+
+function gs(g,i,k,v){
+C.G[g].m[i][k]=v===""?null:Math.max(0,+v);
+tbl(g)
+}
+
+function goKO(){
+if(C.ko.length)return;
+
+if(!C.G.every(g=>g.m.every(m=>m.ga!=null&&m.gb!=null)))
+return alert("Preencha todos os placares dos grupos.");
+
+const g=C.G.length,
+K=C.G.map(x=>rank(x)),
+r=[];
+
+if(g&(g-1)){
+const o=(x,y)=>y.p-x.p||(y.gp-y.gc)-(x.gp-x.gc)||y.gp-x.gp;
+
+const q=[
+...K.map(x=>x[0]),
+...K.map(x=>x[1]),
+...K.map(x=>x[2]).sort(o).slice(0,(g>8?32:16)-2*g)
+].map(x=>x.t);
+
+for(let i=0;i<q.length/2;i++)
+r.push({a:q[i],b:q[q.length-1-i]})
+}
+
+else{
+const q=K.map(x=>[x[0].t,x[1].t]);
+
+for(let i=0;i<q.length;i+=2)
+r.push(
+{a:q[i][0],b:q[i+1][1]},
+{a:q[i+1][0],b:q[i][1]}
+)
+}
+
+C.ko.push(r);
+showKO()
+}
+
+function win(m){
+if(m.ga==null||m.gb==null)return null;
+
+if(m.ga!=m.gb)
+return m.ga>m.gb?m.a:m.b;
+
+if(m.pa!=null&&m.pb!=null&&m.pa!=m.pb)
+return m.pa>m.pb?m.a:m.b;
+
+return null
+}
+
+function showKO(){
+const N={
+16:"16-avos de final",
+8:"Oitavas de final",
+4:"Quartas de final",
+2:"Semifinais",
+1:"Final"
+};
+
+let h="";
+
+C.ko.forEach((r,ri)=>{
+const d=ri<C.ko.length-1?"disabled":"";
+
+h+=`<h2>${N[r.length]}</h2>`+
+r.map((m,i)=>`<div class="mt"><span>${m.a}</span><input ${d} type="number" min="0" value="${m.ga??""}" onchange="ks(${ri},${i},'ga',this.value)"><b>x</b><input ${d} type="number" min="0" value="${m.gb??""}" onchange="ks(${ri},${i},'gb',this.value)"><span>${m.b}</span></div><div class="pen" id="p${ri}_${i}" style="display:${m.ga!=null&&m.ga==m.gb?"block":"none"}">Pênaltis: <input ${d} type="number" min="0" value="${m.pa??""}" onchange="ks(${ri},${i},'pa',this.value)"> x <input ${d} type="number" min="0" value="${m.pb??""}" onchange="ks(${ri},${i},'pb',this.value)"></div>`).join("")
+});
+
+$("ko").innerHTML=h;
+kb()
+}
+
+function ks(r,i,k,v){
+const m=C.ko[r][i];
+
+m[k]=v===""?null:Math.max(0,+v);
+
+const p=$(`p${r}_${i}`);
+
+p.style.display=m.ga!=null&&m.ga==m.gb?"block":"none";
+
+kb()
+}
+
+function kb(){
+const r=C.ko[C.ko.length-1],
+w=r.map(win);
+
+let h="";
+
+if(w.every(x=>x))
+h=r.length==1?
+`<div class="champ">🏆 Campeão: ${w[0]}</div>`:
+'<button class="go" onclick="nx()">Próxima fase →</button>';
+
+$("kb").innerHTML=h
+}
+
+function nx(){
+const w=C.ko[C.ko.length-1].map(win),
+r=[];
+
+for(let i=0;i<w.length;i+=2)
+r.push({a:w[i],b:w[i+1]});
+
+C.ko.push(r);
+showKO()
+}
+
+home();
+</script>
+
+</body>
+</html>
